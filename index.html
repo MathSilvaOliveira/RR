@@ -132,10 +132,10 @@
     z-index: 5;
     background: rgba(255, 255, 255, 0.12);
     border: 1px solid rgba(255, 255, 255, 0.25);
-    font-size: 0.55rem;
-    padding: 0.2em 0.5em;
-    min-height: 20px;
-    min-width: 20px;
+    font-size: 0.40rem;
+    padding: 0.1em 0.4em;
+    min-height: 15px;
+    min-width: 15px;
     opacity: 0;
     transition: left .18s ease, top .18s ease, transform .12s ease, opacity .4s ease;
   }
@@ -168,7 +168,6 @@
     max-width: 32ch;
     margin: 0;
   }
-
   .hearts-field{
     position: fixed;
     inset: 0;
@@ -247,10 +246,15 @@
   'use strict';
 
   /* ---------- Config ---------- */
-  const QUESTION = 'Rafaela, quer sair comigo?';
+  const QUESTION = 'Queridíssima Rafaela, quer sair comigo?';
   const TYPE_SPEED_MS = 90;
   const NUDGE_DELAY_MS = 4000;
   const HEART_EMOJIS = ['❤️','🩷','🧡','💛','💚','💙','🩵','💜','💗','💖','💘','💞','💓','🫶'];
+
+  // Free e-mail relay from web3forms.com — get your own key at
+  // https://web3forms.com (just enter the e-mail you want notified,
+  // no account needed) and paste it below.
+  const WEB3FORMS_ACCESS_KEY = 'a381ffab-43bc-43c3-88db-a3b2e8568462';
 
   /* ---------- Elements ---------- */
   const screenAsk = document.getElementById('screen-ask');
@@ -357,6 +361,28 @@
     }, 260);
   }
 
+  /* ---------- Notify by e-mail when someone says yes ---------- */
+  async function sendYesEmail() {
+    if (!WEB3FORMS_ACCESS_KEY || WEB3FORMS_ACCESS_KEY === 'SUA_ACCESS_KEY_AQUI') {
+      return; // not configured yet — silently skip, don't break the page
+    }
+    try {
+      await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          access_key: WEB3FORMS_ACCESS_KEY,
+          subject: 'Ela disse SIM! 🎉',
+          from_name: 'Convite para sair',
+          message: 'Rafaela acabou de clicar em "Sim" no seu pedido para sair!'
+        })
+      });
+    } catch (err) {
+      // Notification failing should never block the celebration screen.
+      console.error('Não foi possível enviar o e-mail de aviso:', err);
+    }
+  }
+
   /* ---------- Transition to the "yes" screen ---------- */
   function celebrate() {
     screenAsk.classList.remove('is-active');
@@ -364,6 +390,7 @@
     screenYes.setAttribute('aria-hidden', 'false');
     screenAsk.setAttribute('aria-hidden', 'true');
     startRisingHearts();
+    sendYesEmail();
     if (window.navigator.vibrate) window.navigator.vibrate([30, 40, 30]);
   }
 
